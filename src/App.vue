@@ -27,7 +27,7 @@
           <button
             @click="selectedCity = 'boston'"
             :class="[
-              'w-56 h-40 rounded-3xl border-2 p-6 flex flex-col items-center justify-between transition-all duration-200 relative',
+              'w-56 h-40 rounded-3xl border-2 p-6 flex flex-col items-center justify-between transition-all duration-200',
               selectedCity === 'boston'
                 ? 'border-pink-500 bg-gradient-pink shadow-pink'
                 : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
@@ -36,9 +36,9 @@
             <img
               src="../media/boston.png"
               alt="Boston landmark"
-              class="w-13 h-12 absolute top-4"
+              class="w-13 h-12"
             />
-            <div class="text-center mt-8">
+            <div class="text-center">
               <div class="text-xl font-bold text-gray-800 font-nimbus">Boston</div>
               <div class="text-gray-600 font-nimbus">Massachusetts</div>
             </div>
@@ -48,7 +48,7 @@
           <button
             @click="selectedCity = 'seattle'"
             :class="[
-              'w-56 h-40 rounded-3xl border-2 p-6 flex flex-col items-center justify-between transition-all duration-200 relative',
+              'w-56 h-40 rounded-3xl border-2 p-6 flex flex-col items-center justify-between transition-all duration-200',
               selectedCity === 'seattle'
                 ? 'border-pink-500 bg-gradient-pink shadow-pink'
                 : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
@@ -57,9 +57,9 @@
             <img
               src="../media/seattle.png"
               alt="Seattle landmark"
-              class="w-13 h-12 absolute top-4"
+              class="w-13 h-12"
             />
-            <div class="text-center mt-8">
+            <div class="text-center">
               <div class="text-xl font-bold text-gray-800 font-nimbus">Seattle</div>
               <div class="text-gray-600 font-nimbus">Washington</div>
             </div>
@@ -69,7 +69,7 @@
           <button
             @click="selectedCity = 'chicago'"
             :class="[
-              'w-56 h-40 rounded-3xl border-2 p-6 flex flex-col items-center justify-between transition-all duration-200 relative',
+              'w-56 h-40 rounded-3xl border-2 p-6 flex flex-col items-center justify-between transition-all duration-200',
               selectedCity === 'chicago'
                 ? 'border-pink-500 bg-gradient-pink shadow-pink'
                 : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
@@ -78,9 +78,9 @@
             <img
               src="../media/chicago.jpg"
               alt="Chicago landmark"
-              class="w-13 h-12 absolute top-4"
+              class="w-13 h-12"
             />
-            <div class="text-center mt-8">
+            <div class="text-center">
               <div class="text-xl font-bold text-gray-800 font-nimbus">Chicago</div>
               <div class="text-gray-600 font-nimbus">Illinois</div>
             </div>
