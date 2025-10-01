@@ -1,15 +1,15 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { convertWeatherData } from './weatherDataConverter.js'
 
 // Selected city state
-const selectedCity = ref('san francisco')
-const cityData = reactive(new Map());
+const selectedCity = ref('San Francisco')
+const cityWeatherDataSet = reactive(new Map());
 
-const getWeatherConditions = (city) => {
+const updateCityWeatherConditions = (cityName) => {
   const apiKey = import.meta.env.VITE_API_KEY;
   fetch(
-    `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`
+    `https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&appid=${apiKey}&units=metric`
   )
     .then((response) => response.json())
     .then((data) => {
@@ -21,10 +21,12 @@ const getWeatherConditions = (city) => {
         alert("No forecast data available for the next 5 days.");
         return;
       }
-
+      const cityKey = data.city.name.toLowerCase();
       const weatherData = convertWeatherData(data);
       console.log("Converted Weather Data:", weatherData);
-      cityData.set(city, weatherData);
+      // Store the weather data for this city
+      cityWeatherDataSet.set(cityName, weatherData[cityKey]);
+      // console.log(cityWeatherDataSet);
       // return weatherData;
     })
     .catch((err) => {
@@ -34,15 +36,15 @@ const getWeatherConditions = (city) => {
     return;
 };
 
-// Pre-fetch weather data for all cities
 
-//console.log(getWeatherConditions('San Francisco'));
-// console.log(getWeatherConditions('Boston'));
-// cityData.set('san francisco', getWeatherConditions('San Francisco'));
-// cityData.set('boston', getWeatherConditions('Boston'));
-// cityData.set('seattle', getWeatherConditions('Seattle'));
-// cityData.set('chicago', getWeatherConditions('Chicago'));
-// cityData.set('new york', getWeatherConditions('New York'));
+// Pre-fetch weather data for all cities
+updateCityWeatherConditions('San Francisco');
+updateCityWeatherConditions('Boston');
+updateCityWeatherConditions('Seattle');
+updateCityWeatherConditions('Chicago');
+updateCityWeatherConditions('New York');
+
+const curCityWeatherData = computed(() => cityWeatherDataSet.get(selectedCity.value) || null)
 </script>
 
 <template>
@@ -66,22 +68,24 @@ const getWeatherConditions = (city) => {
     </header>
 
     <!-- Hero Section -->
-    <section class="relative min-h-[600px] overflow-hidden bg-white">
-      <img src="../src/assets/guzheng_girl.png" alt="Girl playing guzheng by the window with city skyline"
-        class="absolute inset-0 w-full h-full object-cover" />``
-      <div class="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
-      <div class="relative z-10 flex items-center justify-center min-h-[600px] px-8 sm:px-16">
-        <div id="hero-content" class="text-center max-w-md">
-          <h2 class="font-nimbus text-5xl font-bold text-white leading-none mb-6">Cloud Song</h2>
-          <p class="font-nimbus text-xl text-white max-w-sm mx-auto leading-relaxed">
-            Where music bridges, love reaches
-          </p>
+    <section class="relative min-h-[600px] bg-white">
+      <div class="max-w-7xl mx-auto px-8 relative min-h-[600px] overflow-hidden">
+        <img src="../src/assets/guzheng_girl.png" alt="Girl playing guzheng by the window with city skyline"
+          class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
+        <div class="relative z-10 flex items-center justify-center min-h-[600px]">
+          <div id="hero-content" class="text-center max-w-md mx-auto">
+            <h2 class="font-nimbus text-5xl font-bold text-white leading-none mb-6">Cloud Song</h2>
+            <p class="font-nimbus text-xl text-white max-w-sm mx-auto leading-relaxed">
+              Where music bridges, love reaches
+            </p>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-7xl mx-auto px-8 py-12 w-full">
+    <main class="flex-1 max-w-7xl mx-auto px-8 py-12 w-full" style="background: linear-gradient(to bottom right, #F3F7FA, #A5B2C5);">
       <!-- City Selection -->
       <section class="mb-8">
         <h3 class="font-nimbus text-3xl font-bold text-gray-800 text-center mb-6">
@@ -90,14 +94,14 @@ const getWeatherConditions = (city) => {
 
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <!-- San Francisco - Selected -->
+          <!-- San Francisco -->
           <button
-            @click="selectedCity = 'san francisco'"
+            @click="selectedCity = 'San Francisco'"
             :class="[
-              'rounded-3xl border-2 border-pink-500 shadow-lg shadow-pink-200 bg-white p-6 text-center transition-all hover:shadow-xl',
-               selectedCity === 'san francisco'
-                ? 'border-pink-500 bg-gradient-pink shadow-pink'
-                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
+              'rounded-3xl border-2 bg-white p-6 text-center transition-all',
+               selectedCity === 'San Francisco'
+                ? 'border-pink-500 bg-gradient-pink shadow-pink shadow-lg'
+                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md hover:shadow-lg',
             ]"
           >
             <div class="text-4xl mb-3">🌉</div>
@@ -107,12 +111,12 @@ const getWeatherConditions = (city) => {
 
           <!-- Boston -->
           <button
-            @click="selectedCity = 'boston'"
+            @click="selectedCity = 'Boston'"
             :class="[
-              'rounded-3xl border-2 border-gray-200 bg-white/90 p-6 text-center transition-all hover:shadow-lg',
-              selectedCity === 'boston'
-                ? 'border-pink-500 bg-gradient-pink shadow-pink'
-                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
+              'rounded-3xl border-2 bg-white p-6 text-center transition-all',
+              selectedCity === 'Boston'
+                ? 'border-pink-500 bg-gradient-pink shadow-pink shadow-lg'
+                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md hover:shadow-xl',
             ]"
           >
             <img src="../src/assets/boston.png" alt="Boston" class="w-13 h-12 object-contain mx-auto mb-3" />
@@ -122,12 +126,12 @@ const getWeatherConditions = (city) => {
 
           <!-- Seattle -->
           <button
-            @click="selectedCity = 'seattle'"
+            @click="selectedCity = 'Seattle'"
             :class="[
-              'rounded-3xl border-2 border-gray-200 bg-white/90 p-6 text-center transition-all hover:shadow-lg',
-              selectedCity === 'seattle'
-                ? 'border-pink-500 bg-gradient-pink shadow-pink'
-                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
+              'rounded-3xl border-2 bg-white p-6 text-center transition-all',
+              selectedCity === 'Seattle'
+                ? 'border-pink-500 bg-gradient-pink shadow-pink shadow-lg'
+                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md hover:shadow-xl',
             ]"
           >
             <img src="../src/assets/mountain.png" alt="Seattle" class="w-13 h-12 object-contain mx-auto mb-3" />
@@ -137,12 +141,12 @@ const getWeatherConditions = (city) => {
 
           <!-- Chicago -->
           <button
-            @click="selectedCity = 'chicago'"
+            @click="selectedCity = 'Chicago'"
             :class="[
-              'rounded-3xl border-2 border-gray-200 bg-white/90 p-6 text-center transition-all hover:shadow-lg',
-              selectedCity === 'chicago'
-                ? 'border-pink-500 bg-gradient-pink shadow-pink'
-                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
+              'rounded-3xl border-2 bg-white p-6 text-center transition-all',
+              selectedCity === 'Chicago'
+                ? 'border-pink-500 bg-gradient-pink shadow-pink shadow-lg'
+                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md hover:shadow-xl',
             ]"
           >
             <img src="../src/assets/city.png" alt="Chicago" class="w-13 h-12 object-contain mx-auto mb-3" />
@@ -152,12 +156,12 @@ const getWeatherConditions = (city) => {
 
           <!-- New York -->
           <button
-            @click="selectedCity = 'new york'"
+            @click="selectedCity = 'New York'"
             :class="[
-              'rounded-3xl border-2 border-gray-200 bg-white/90 p-6 text-center transition-all hover:shadow-lg',
-              selectedCity === 'new york'
-                ? 'border-pink-500 bg-gradient-pink shadow-pink'
-                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md',
+              'rounded-3xl border-2 bg-white p-6 text-center transition-all',
+              selectedCity === 'New York'
+                ? 'border-pink-500 bg-gradient-pink shadow-pink shadow-lg'
+                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md hover:shadow-xl',
             ]"
           >
             <div class="text-4xl mb-3">🗽</div>
@@ -170,8 +174,8 @@ const getWeatherConditions = (city) => {
       <!-- Weather Display -->
       <section class="bg-white rounded-3xl border-4 border-l-4 border-gray-200 p-11">
         <div class="text-center mb-8">
-          <h3 class="font-nimbus text-4xl font-bold text-gray-800 mb-2">`{{ cityData.get(selectedCity).name }}` Weather</h3>
-          <p class="font-nimbus text-lg text-gray-600">{{ cityData.get(selectedCity).location }}</p>
+          <h3 class="font-nimbus text-4xl font-bold text-gray-800 mb-2">{{ curCityWeatherData?.name || selectedCity }} Weather</h3>
+          <p class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.location || 'Location' }}</p>
         </div>
 
         <!-- Current Weather -->
@@ -180,9 +184,9 @@ const getWeatherConditions = (city) => {
             <!-- Main Weather Info -->
             <div class="text-center">
               <img src="../src/assets/sunny.png" alt="Sunny weather" class="w-29 h-28 object-contain mx-auto mb-4" />
-              <div class="font-nimbus text-6xl font-bold text-gray-800 mb-4">72°F</div>
-              <div class="font-nimbus text-3xl font-medium text-gray-700 mb-4">Sunny</div>
-              <div class="font-nimbus text-lg text-gray-600">Clear skies</div>
+              <div class="font-nimbus text-6xl font-bold text-gray-800 mb-4">{{ curCityWeatherData?.weather?.temperature }}</div>
+              <div class="font-nimbus text-3xl font-medium text-gray-700 mb-4">{{ curCityWeatherData?.weather?.condition }}</div>
+              <div class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.weather?.description }}</div>
             </div>
 
             <!-- Weather Details -->
@@ -192,7 +196,7 @@ const getWeatherConditions = (city) => {
                   <span class="text-2xl mr-3">🌡️</span>
                   <span class="font-nimbus text-lg font-medium text-gray-700">Feels Like</span>
                 </div>
-                <span class="font-nimbus text-xl font-bold text-gray-800">75°F</span>
+                <span class="font-nimbus text-xl font-bold text-gray-800">{{ curCityWeatherData?.weather?.feelsLike }}</span>
               </div>
 
               <div class="bg-white/80 rounded-3xl border border-gray-200 p-6 flex items-center justify-between">
@@ -200,7 +204,7 @@ const getWeatherConditions = (city) => {
                   <span class="text-2xl mr-5">💧</span>
                   <span class="font-nimbus text-lg font-medium text-gray-700">Humidity</span>
                 </div>
-                <span class="font-nimbus text-xl font-bold text-gray-800">65%</span>
+                <span class="font-nimbus text-xl font-bold text-gray-800">{{ curCityWeatherData?.weather?.humidity }}</span>
               </div>
 
               <div class="bg-white/80 rounded-3xl border border-gray-200 p-6 flex items-center justify-between">
@@ -208,7 +212,7 @@ const getWeatherConditions = (city) => {
                   <span class="text-2xl mr-3">💨</span>
                   <span class="font-nimbus text-lg font-medium text-gray-700">Wind Speed</span>
                 </div>
-                <span class="font-nimbus text-xl font-bold text-gray-800">7 mph</span>
+                <span class="font-nimbus text-xl font-bold text-gray-800">{{ curCityWeatherData?.weather?.windSpeed }}</span>
               </div>
             </div>
           </div>
@@ -220,55 +224,30 @@ const getWeatherConditions = (city) => {
             5-Day Forecast
           </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <!-- Today -->
-            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center">
-              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">Today</h5>
-              <p class="font-nimbus text-sm text-gray-600 mb-2">Dec 19</p>
-              <img src="../src/assets/sunny_small.png" alt="Sunny" class="w-7 h-8 object-contain mx-auto mb-2" />
-              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">72°F</div>
-              <div class="font-nimbus text-sm text-gray-600 mb-1">Sunny</div>
-              <div class="font-nimbus text-xs text-gray-500">H: 75° L: 58°</div>
+            <div 
+              v-for="(forecast, index) in (curCityWeatherData?.forecast || []).slice(0, 5)" 
+              :key="index"
+              class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center"
+            >
+              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">{{ forecast.day }}</h5>
+              <p class="font-nimbus text-sm text-gray-600 mb-2">{{ forecast.date }}</p>
+              <div class="text-4xl mb-2">{{ forecast.icon }}</div>
+              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ forecast.temperature }}</div>
+              <div class="font-nimbus text-sm text-gray-600 mb-1">{{ forecast.condition }}</div>
+              <div class="font-nimbus text-xs text-gray-500">{{ forecast.range }}</div>
             </div>
-
-            <!-- Tomorrow -->
-            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center">
-              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">Tomorrow</h5>
-              <p class="font-nimbus text-sm text-gray-600 mb-2">Dec 20</p>
-              <div class="text-4xl mb-2">⛅</div>
-              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">68°F</div>
-              <div class="font-nimbus text-sm text-gray-600 mb-1">Partly Cloudy</div>
-              <div class="font-nimbus text-xs text-gray-500">H: 71° L: 55°</div>
-            </div>
-
-            <!-- Saturday -->
-            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center">
-              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">Saturday</h5>
-              <p class="font-nimbus text-sm text-gray-600 mb-2">Dec 21</p>
-              <div class="text-4xl mb-2">🌧️</div>
-              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">63°F</div>
-              <div class="font-nimbus text-sm text-gray-600 mb-1">Light Rain</div>
-              <div class="font-nimbus text-xs text-gray-500">H: 66° L: 52°</div>
-            </div>
-
-            <!-- Sunday -->
-            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center">
-              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">Sunday</h5>
-              <p class="font-nimbus text-sm text-gray-600 mb-2">Dec 22</p>
-              <div class="text-4xl mb-2">☁️</div>
-              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">65°F</div>
-              <div class="font-nimbus text-sm text-gray-600 mb-1">Cloudy</div>
-              <div class="font-nimbus text-xs text-gray-500">H: 68° L: 54°</div>
-            </div>
-
-            <!-- Monday -->
-            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center">
-              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">Monday</h5>
-              <p class="font-nimbus text-sm text-gray-600 mb-2">Dec 23</p>
-              <div class="text-4xl mb-2">☀️</div>
-              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">70°F</div>
-              <div class="font-nimbus text-sm text-gray-600 mb-1">Sunny</div>
-              <div class="font-nimbus text-xs text-gray-500">H: 73° L: 56°</div>
-            </div>
+            
+            <!-- Fallback static forecast cards if no data -->
+            <template v-if="!curCityWeatherData?.forecast || curCityWeatherData.forecast.length === 0">
+              <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center">
+                <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">Today</h5>
+                <p class="font-nimbus text-sm text-gray-600 mb-2">Loading...</p>
+                <div class="text-4xl mb-2">☀️</div>
+                <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">--°F</div>
+                <div class="font-nimbus text-sm text-gray-600 mb-1">Loading</div>
+                <div class="font-nimbus text-xs text-gray-500">H: --° L: --°</div>
+              </div>
+            </template>
           </div>
         </div>
 

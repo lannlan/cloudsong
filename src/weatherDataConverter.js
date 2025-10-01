@@ -56,6 +56,7 @@ export function convertWeatherData(apiData) {
   const getLocation = (city) => {
     // This is a simplified mapping - in reality, you'd want a more comprehensive mapping
     const stateMap = {
+      'San Francisco': 'California, United States',
       'Boston': 'Massachusetts, United States',
       'Seattle': 'Washington, United States',
       'Chicago': 'Illinois, United States',
