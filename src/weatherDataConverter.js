@@ -96,12 +96,12 @@ export function convertWeatherData(apiData) {
           day: getDayName(forecast.dt, dailyForecasts.length),
           date: formatDate(forecast.dt),
           icon: getWeatherIcon(forecast.weather[0].main, forecast.weather[0].id),
-          temperature: `${forecast.main.temp}°F`,
+          temperature: `${Math.round(forecast.main.temp)}°C`,
           condition: forecast.weather[0].main === 'Clouds' ? 
                     (forecast.weather[0].description.includes('scattered') ? 'Partly Cloudy' : 
                      forecast.weather[0].description.includes('overcast') ? 'Overcast' : 'Cloudy') : 
                     forecast.weather[0].main,
-          range: `H: ${maxTemp}C° L: ${minTemp}°C`
+          range: `H: ${Math.round(maxTemp)}°C L: ${Math.round(minTemp)}°C`
         });
       }
     }
@@ -114,14 +114,14 @@ export function convertWeatherData(apiData) {
       name: city.name,
       location: getLocation(city),
       weather: {
-        temperature: `${currentWeather.main.temp}°C`,
+        temperature: `${Math.round(currentWeather.main.temp)}°C`,
         condition: currentWeather.weather[0].main === 'Clouds' ? 
                   (currentWeather.weather[0].description.includes('scattered') ? 'Partly Cloudy' : 
                    currentWeather.weather[0].description.includes('overcast') ? 'Overcast' : 'Cloudy') : 
                   currentWeather.weather[0].main,
         description: currentWeather.weather[0].description.charAt(0).toUpperCase() + 
                     currentWeather.weather[0].description.slice(1),
-        feelsLike: `${currentWeather.main.feels_like}°C`,
+        feelsLike: `${Math.round(currentWeather.main.feels_like)}°C`,
         humidity: `${currentWeather.main.humidity}%`,
         windSpeed: `${currentWeather.wind.speed} m/s`
       },
