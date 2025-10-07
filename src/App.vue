@@ -5,6 +5,8 @@ import { convertWeatherData } from './weatherDataConverter.js'
 // Selected city state
 const selectedCity = ref('San Francisco')
 const cityWeatherDataSet = reactive(new Map());
+const lastUpdated = ref(null)
+const now = ref(new Date())
 
 // Audio state
 const audio = ref(null)
@@ -43,6 +45,8 @@ const updateCityWeatherConditions = (cityName) => {
       // console.log("Converted Weather Data:", weatherData);
       // Store the weather data for this city
       cityWeatherDataSet.set(cityName, weatherData[cityKey]);
+      // Update the last updated timestamp
+      lastUpdated.value = new Date();
     })
     .catch((err) => {
       console.error(err);
@@ -55,11 +59,44 @@ const updateCityWeatherConditions = (cityName) => {
 // Pre-fetch weather data for all cities
 updateCityWeatherConditions('San Francisco');
 updateCityWeatherConditions('Boston');
-updateCityWeatherConditions('Seattle');
+// updateCityWeatherConditions('Seattle');
 updateCityWeatherConditions('Chicago');
-updateCityWeatherConditions('New York');
+// updateCityWeatherConditions('New York');
+updateCityWeatherConditions('beijing');
+updateCityWeatherConditions('tianjin');
+
 
 const curCityWeatherData = computed(() => cityWeatherDataSet.get(selectedCity.value) || null)
+
+// Format last updated time
+const formattedLastUpdated = computed(() => {
+  if (!lastUpdated.value) return 'Never'
+  
+  // Use now.value to make this computed property reactive to time changes
+  const currentMoment = now.value
+  const diff = currentMoment - lastUpdated.value
+  const minutes = Math.floor(diff / 60000)
+  
+  if (minutes < 5) return 'Just now'
+  
+  // Round to nearest 5 minutes for display
+  const roundedMinutes = Math.floor(minutes / 5) * 5
+  if (roundedMinutes < 60) return `${roundedMinutes} minutes ago`
+  
+  const hours = Math.floor(minutes / 60)
+  if (hours === 1) return '1 hour ago'
+  if (hours < 24) return `${hours} hours ago`
+  
+  // For older updates, show full date and time
+  return lastUpdated.value.toLocaleString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  })
+})
 
 // Audio functions
 const togglePlayPause = () => {
@@ -168,6 +205,14 @@ const durationFormatted = computed(() => formatTime(duration.value))
 
 // Initialize audio when component mounts
 onMounted(() => {
+  // Update current time every 5 minutes to keep "last updated" fresh
+  const timeInterval = setInterval(() => {
+    now.value = new Date()
+  }, 300000) // Update every 5 minutes
+  
+  // Store interval ID for cleanup
+  window._timeUpdateInterval = timeInterval
+  
   if (audio.value) {
     audio.value.addEventListener('loadedmetadata', () => {
       duration.value = audio.value.duration
@@ -224,6 +269,11 @@ onUnmounted(() => {
   document.removeEventListener('click', handleUserInteraction)
   document.removeEventListener('keydown', handleUserInteraction)
   document.removeEventListener('touchstart', handleUserInteraction)
+  
+  // Clear the time update interval
+  if (window._timeUpdateInterval) {
+    clearInterval(window._timeUpdateInterval)
+  }
 })
 
 // Function to attempt auto-play
@@ -404,11 +454,14 @@ const selectCityWithVideo = (cityName) => {
         <div class="flex items-center min-w-60">
           <img src="../src/assets/cloud_song_logo.png" alt="Cloud Song logo"
             class="w-15 h-15 rounded-full object-cover" />
+
           <div class="ml-3 max-w-96">
             <h1 class="font-limelight text-3xl text-gray-800 leading-tight">Cloud Song</h1>
             <p class="font-inter text-base text-gray-600">Where music bridges, love reaches</p>
           </div>
+
         </div>
+
         <div class="text-right flex flex-col items-end">
           <p class="font-nimbus text-base text-gray-800 font-medium">Made for grandparents</p>
           <p class="text-pink-500 text-sm font-inter font-medium">With Love ❤️</p>
@@ -484,10 +537,10 @@ const selectCityWithVideo = (cityName) => {
         
         <div class="relative z-10 flex items-center justify-center min-h-[600px]">
           <div id="hero-content" class="text-center max-w-md mx-auto">
-            <h2 class="font-nimbus text-5xl font-bold text-white leading-none mb-6">Cloud Song</h2>
+            <!-- <h2 class="font-nimbus text-5xl font-bold text-white leading-none mb-6">Cloud Song</h2>
             <p class="font-nimbus text-xl text-white max-w-sm mx-auto leading-relaxed">
               Where music bridges, love reaches
-            </p>
+            </p> -->
           </div>
         </div>
       </div>
@@ -498,7 +551,7 @@ const selectCityWithVideo = (cityName) => {
       <!-- City Selection -->
       <section class="mb-8">
         <h3 class="font-nimbus text-3xl font-bold text-gray-800 text-center mb-6">
-          Select a U.S. City
+          Select a City
         </h3>
 
 
@@ -534,7 +587,7 @@ const selectCityWithVideo = (cityName) => {
           </button>
 
           <!-- Seattle -->
-          <button
+          <!-- <button
             @click="selectCityWithVideo('Seattle')"
             :class="[
               'rounded-3xl border-2 bg-white p-6 text-center transition-all',
@@ -546,7 +599,7 @@ const selectCityWithVideo = (cityName) => {
             <img src="../src/assets/mountain.png" alt="Seattle" class="w-13 h-12 object-contain mx-auto mb-3" />
             <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Seattle</h4>
             <p class="font-nimbus text-base text-gray-600">Washington</p>
-          </button>
+          </button> -->
 
           <!-- Chicago -->
           <button
@@ -564,7 +617,7 @@ const selectCityWithVideo = (cityName) => {
           </button>
 
           <!-- New York -->
-          <button
+          <!-- <button
             @click="selectCityWithVideo('New York')"
             :class="[
               'rounded-3xl border-2 bg-white p-6 text-center transition-all',
@@ -576,6 +629,34 @@ const selectCityWithVideo = (cityName) => {
             <div class="text-4xl mb-3">🗽</div>
             <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">New York</h4>
             <p class="font-nimbus text-base text-gray-600">New York</p>
+          </button> -->
+
+          <button
+            @click="selectCityWithVideo('beijing')"
+            :class="[
+              'rounded-3xl border-2 bg-white p-6 text-center transition-all',
+              selectedCity === 'beijing'
+                ? 'border-pink-500 bg-gradient-pink shadow-pink shadow-lg'
+                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md hover:shadow-xl',
+            ]"
+          >
+            <img src="../src/assets/forbidden-city.png" alt="Beijing" class="w-13 h-12 object-contain mx-auto mb-3" />
+            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Beijing</h4>
+            <p class="font-nimbus text-base text-gray-600">Beijing</p>
+          </button>
+
+          <button
+            @click="selectCityWithVideo('tianjin')"
+            :class="[
+              'rounded-3xl border-2 bg-white p-6 text-center transition-all',
+              selectedCity === 'tianjin'
+                ? 'border-pink-500 bg-gradient-pink shadow-pink shadow-lg'
+                : 'border-gray-200 bg-white bg-opacity-90 hover:bg-opacity-100 hover:shadow-md hover:shadow-xl',
+            ]"
+          >
+            <img src="../src/assets/wheel.jpg" alt="Tianjin" class="w-13 h-12 object-contain mx-auto mb-3" />
+            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Tianjin</h4>
+            <p class="font-nimbus text-base text-gray-600">Hebei</p>
           </button>
         </div>
       </section>
@@ -592,7 +673,7 @@ const selectCityWithVideo = (cityName) => {
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <!-- Main Weather Info -->
             <div class="text-center">
-              <img src="../src/assets/sunny.png" alt="Sunny weather" class="w-29 h-28 object-contain mx-auto mb-4" />
+              <div class="text-9xl mb-4">{{ curCityWeatherData?.forecast?.[0]?.icon || '☀️' }}</div>
               <div class="font-nimbus text-6xl font-bold text-gray-800 mb-4">{{ curCityWeatherData?.weather?.temperature }}</div>
               <div class="font-nimbus text-3xl font-medium text-gray-700 mb-4">{{ curCityWeatherData?.weather?.condition }}</div>
               <div class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.weather?.description }}</div>
@@ -662,8 +743,8 @@ const selectCityWithVideo = (cityName) => {
 
         <!-- Last Updated -->
         <div class="text-center text-gray-500">
-          <p class="font-nimbus text-base mb-1">Last Updated: December 30, 2025 at 10:30 AM PST</p>
-          <p class="font-nimbus text-sm text-gray-400">Data refreshed every 15 minutes</p>
+          <p class="font-nimbus text-base mb-1">Data Last Updated: {{ formattedLastUpdated }}</p>
+          <p class="font-nimbus text-sm text-gray-400">Weather data from OpenWeatherMap API</p>
         </div>
       </section>
     </main>

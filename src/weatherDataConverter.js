@@ -61,7 +61,8 @@ export function convertWeatherData(apiData) {
       'Seattle': 'Washington, United States',
       'Chicago': 'Illinois, United States',
       'New York': 'New York, United States',
-      'Los Angeles': 'California, United States'
+      'Beijing': 'Beijing, China',
+      'Tianjin': 'Hebei, China'
     };
     return stateMap[city.name] || `${city.country}`;
   };
