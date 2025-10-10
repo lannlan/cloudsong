@@ -13,21 +13,21 @@ const audio = ref(null)
 const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
-const currentTrack = ref('default_guzheng.mp3')
+const currentTrack = ref('sunny_guzheng.mp3')
 const currentTrackName = ref('Spring River Flower Moon Night')
-const hasUserInteracted = ref(false)
 
 // Video state
 const video = ref(null)
 const isVideoPlaying = ref(false)
 const currentVideo = ref('')
 const showVideo = ref(false)
-const showVideoControls = ref(true) // Start with controls visible for debugging
+const showVideoControls = ref(true) // Start visible for 5 seconds
 const controlsTimeout = ref(null)
+const showVideoContent = ref(false) // Simple state for transition
 
 const updateCityWeatherConditions = (cityName) => {
   const apiKey = import.meta.env.VITE_API_KEY;
-  fetch(
+  return fetch(
     `https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&appid=${apiKey}&units=metric`
   )
     .then((response) => response.json())
@@ -47,12 +47,19 @@ const updateCityWeatherConditions = (cityName) => {
       cityWeatherDataSet.set(cityName, weatherData[cityKey]);
       // Update the last updated timestamp
       lastUpdated.value = new Date();
+      
+      // If this is the default city (San Francisco), set up media but don't auto-play
+      if (cityName === 'San Francisco' && weatherData[cityKey] && weatherData[cityKey].weather) {
+        const condition = weatherData[cityKey].weather.condition;
+        setupWeatherVideo('San Francisco', condition, true); // true = isInitialLoad
+        setupWeatherAudio(condition);
+        // Don't auto-play on initial load - only when user clicks city
+      }
     })
     .catch((err) => {
       console.error(err);
       alert("Error fetching weather data.");
     });
-    return;
 };
 
 
@@ -103,8 +110,12 @@ const togglePlayPause = () => {
   if (audio.value) {
     if (isPlaying.value) {
       audio.value.pause()
+      // Also pause video when audio is paused
+      pauseVideo()
     } else {
       audio.value.play()
+      // Also play video when audio is played
+      playVideo()
     }
   }
 }
@@ -148,7 +159,7 @@ const showControls = () => {
   if (controlsTimeout.value) {
     clearTimeout(controlsTimeout.value)
   }
-  // Auto-hide controls after 3 seconds
+  // Auto-hide controls after 3 seconds when user stops interacting
   controlsTimeout.value = setTimeout(() => {
     showVideoControls.value = false
   }, 3000)
@@ -158,17 +169,21 @@ const hideControls = () => {
   if (controlsTimeout.value) {
     clearTimeout(controlsTimeout.value)
   }
-  showVideoControls.value = false
+  // Small delay before hiding to prevent flickering
+  controlsTimeout.value = setTimeout(() => {
+    showVideoControls.value = false
+  }, 500)
 }
 
-// Handle touch/click to show controls
+// Handle touch/click interaction
 const handleVideoInteraction = () => {
-  if (showVideoControls.value) {
-    // If controls are already showing, reset the timer
-    showControls()
-  } else {
-    // If controls are hidden, show them
-    showControls()
+  // Show controls and reset timer
+  showControls()
+  
+  // Also remove poster if it's still there (safety net)
+  if (video.value && video.value.hasAttribute('poster')) {
+    video.value.removeAttribute('poster')
+    console.log('Poster removed via user interaction')
   }
 }
 
@@ -205,6 +220,11 @@ const durationFormatted = computed(() => formatTime(duration.value))
 
 // Initialize audio when component mounts
 onMounted(() => {
+  // Hide video controls after 5 seconds on page load
+  setTimeout(() => {
+    showVideoControls.value = false
+  }, 5000)
+  
   // Update current time every 5 minutes to keep "last updated" fresh
   const timeInterval = setInterval(() => {
     now.value = new Date()
@@ -216,88 +236,65 @@ onMounted(() => {
   if (audio.value) {
     audio.value.addEventListener('loadedmetadata', () => {
       duration.value = audio.value.duration
-      // Try to auto-play after metadata is loaded
-      tryAutoPlay()
+      // Don't auto-play - let user control playback
     })
     
     audio.value.addEventListener('timeupdate', updateTime)
     
     audio.value.addEventListener('play', () => {
       isPlaying.value = true
+      // Sync video when audio plays
+      if (video.value && showVideo.value && !isVideoPlaying.value) {
+        video.value.play().catch(error => {
+          console.log('Video sync play failed:', error)
+        })
+      }
     })
     
     audio.value.addEventListener('pause', () => {
       isPlaying.value = false
+      // Sync video when audio pauses
+      if (video.value && isVideoPlaying.value) {
+        video.value.pause()
+      }
     })
     
     audio.value.addEventListener('ended', () => {
       isPlaying.value = false
       currentTime.value = 0
+      // Pause video when audio ends
+      if (video.value && isVideoPlaying.value) {
+        video.value.pause()
+      }
     })
     
-    audio.value.addEventListener('canplaythrough', () => {
-      // Try to auto-play when audio can play through without stopping
-      tryAutoPlay()
-    })
-    
-    // Load the audio file
+    // Load the audio file but don't auto-play
     audio.value.load()
-    
-    // Add event listeners for user interaction to enable auto-play
-    document.addEventListener('click', handleUserInteraction)
-    document.addEventListener('keydown', handleUserInteraction)
-    document.addEventListener('touchstart', handleUserInteraction)
   }
   
-  // Initialize with default city video and audio after weather data loads
+  // Fallback setup in case weather data doesn't load within 3 seconds
   setTimeout(() => {
     const defaultWeatherData = cityWeatherDataSet.get('San Francisco')
-    if (defaultWeatherData && defaultWeatherData.weather) {
-      const condition = defaultWeatherData.weather.condition
-      playWeatherVideo('San Francisco', condition)
-      playWeatherAudio(condition)
-    } else {
-      // Fallback to clear weather if no data available
-      playWeatherVideo('San Francisco', 'clear')
-      playWeatherAudio('clear')
+    if (!defaultWeatherData || !defaultWeatherData.weather) {
+      // Setup fallback with clear weather but don't auto-play
+      setupWeatherVideo('San Francisco', 'clear', true); // true = isInitialLoad
+      setupWeatherAudio('clear');
+      // Don't auto-play on initial load - only when user clicks city
     }
-  }, 2000) // Wait 2 seconds for weather data to load
+  }, 3000) // Wait 3 seconds for weather data, then fallback
 })
 
 // Cleanup event listeners when component unmounts
 onUnmounted(() => {
-  document.removeEventListener('click', handleUserInteraction)
-  document.removeEventListener('keydown', handleUserInteraction)
-  document.removeEventListener('touchstart', handleUserInteraction)
-  
   // Clear the time update interval
   if (window._timeUpdateInterval) {
     clearInterval(window._timeUpdateInterval)
   }
+  // Clear controls timeout
+  if (controlsTimeout.value) {
+    clearTimeout(controlsTimeout.value)
+  }
 })
-
-// Function to attempt auto-play
-const tryAutoPlay = () => {
-  if (audio.value && !isPlaying.value) {
-    audio.value.play().catch(error => {
-      console.log('Auto-play failed:', error)
-      // Auto-play failed due to browser policy, which is normal
-      // The user will need to click the play button manually
-    })
-  }
-}
-
-// Handle user interaction to enable auto-play
-const handleUserInteraction = () => {
-  if (!hasUserInteracted.value && audio.value) {
-    hasUserInteracted.value = true
-    tryAutoPlay()
-    // Remove the event listener after first interaction
-    document.removeEventListener('click', handleUserInteraction)
-    document.removeEventListener('keydown', handleUserInteraction)
-    document.removeEventListener('touchstart', handleUserInteraction)
-  }
-}
 
 // Map weather conditions to video filenames
 const getVideoFilename = (weatherCondition) => {
@@ -305,6 +302,8 @@ const getVideoFilename = (weatherCondition) => {
     'clear': 'clear.mp4',
     'clouds': 'clouds.mp4',
     'cloudy': 'clouds.mp4',
+    'partlycloudy': 'clouds.mp4',
+    'overcast': 'clouds.mp4',
     'rain': 'rain.mp4',
     'rainy': 'rain.mp4',
     'snow': 'snow.mp4',
@@ -324,6 +323,9 @@ const getAudioFilename = (weatherCondition) => {
     'sunny': 'sunny_guzheng.mp3',
     'clouds': 'cloudy_guzheng.mp3',
     'cloudy': 'cloudy_guzheng.mp3',
+    'partlycloudy': 'cloudy_guzheng.mp3',
+    'partly cloudy': 'cloudy_guzheng.mp3', // Keep both variants for compatibility
+    'overcast': 'cloudy_guzheng.mp3',
     'rain': 'rainy_guzheng.mp3',
     'rainy': 'rainy_guzheng.mp3',
     'snow': 'snowy_guzheng.mp3',
@@ -333,35 +335,76 @@ const getAudioFilename = (weatherCondition) => {
   }
   
   const condition = weatherCondition?.toLowerCase() || 'clear'
-  return conditionMap[condition] || 'default_guzheng.mp3'
+  return conditionMap[condition] || 'sunny_guzheng.mp3'
 }
 
-// Play weather video based on city and weather condition
-const playWeatherVideo = (cityName, weatherCondition) => {
+// Setup weather video based on city and weather condition (don't auto-play)
+const setupWeatherVideo = (cityName, weatherCondition, isInitialLoad = false) => {
+  console.log(`setupWeatherVideo, ${cityName}, ${weatherCondition}, ${isInitialLoad}`)
   const videoFilename = getVideoFilename(weatherCondition)
-  // For now, let's not encode and see if spaces are the issue
   const videoPath = `media/${cityName}/${videoFilename}`
   
-  // First, ensure the video element is visible and update the source
+  // Reset transition state for new video
+  showVideoContent.value = !isInitialLoad || cityName !== 'San Francisco'
+  
+  // Setup the video element but don't auto-play
   showVideo.value = true
   currentVideo.value = videoPath
   
-  // Wait for video to load then play
+  // Only set poster for initial San Francisco load
+  if (video.value) {
+    if (isInitialLoad && cityName === 'San Francisco') {
+      video.value.setAttribute('poster', '/guzheng_girl.png')
+    } else {
+      video.value.removeAttribute('poster')
+    }
+  }
+  
+  // Load video but don't play
   setTimeout(() => {
     if (video.value && showVideo.value) {
       video.value.load()
-      video.value.play().then(() => {
-        isVideoPlaying.value = true
-        console.log('Video playing:', videoPath)
-      }).catch(() => {
-        console.log('Video autoplay blocked, user can click to play')
-      })
+      console.log('Video ready:', videoPath)
+      
+      // Add multiple event listeners to ensure poster removal (only if poster was set)
+      if (isInitialLoad && cityName === 'San Francisco') {
+        const removePoster = () => {
+          if (video.value && video.value.hasAttribute('poster')) {
+            // Force video to show first frame immediately
+            video.value.currentTime = 0.1
+            // Trigger fade-in transition
+            showVideoContent.value = true
+            // Remove poster after fade-in completes
+            setTimeout(() => {
+              video.value.removeAttribute('poster')
+              console.log('Poster removed for', cityName)
+            }, 300) // Wait for fade-in to complete
+            // Clean up all listeners
+            video.value.removeEventListener('loadeddata', removePoster)
+            video.value.removeEventListener('canplay', removePoster)
+            video.value.removeEventListener('loadedmetadata', removePoster)
+          }
+        }
+        
+        // Try multiple events to ensure poster removal
+        video.value.addEventListener('loadeddata', removePoster)
+        video.value.addEventListener('canplay', removePoster)
+        video.value.addEventListener('loadedmetadata', removePoster)
+        
+        // Fallback: force remove poster after 3 seconds if events don't fire
+        setTimeout(() => {
+          if (video.value && video.value.hasAttribute('poster')) {
+            console.log('Fallback: removing poster after timeout for', cityName)
+            removePoster()
+          }
+        }, 3000)
+      }
     }
   }, 100)
 }
 
-// Play weather audio based on weather condition
-const playWeatherAudio = (weatherCondition) => {
+// Setup weather audio based on weather condition (don't auto-play)
+const setupWeatherAudio = (weatherCondition) => {
   const audioFilename = getAudioFilename(weatherCondition)
   const newTrack = audioFilename
   
@@ -370,30 +413,18 @@ const playWeatherAudio = (weatherCondition) => {
   
   // Update track name based on weather
   const trackNames = {
-    'sunny_guzheng.mp3': 'Sunny Day Melody',
-    'cloudy_guzheng.mp3': 'Cloudy Sky Harmony',
-    'rainy_guzheng.mp3': 'Rainy Day Serenade',
-    'snowy_guzheng.mp3': 'Snow Mountain Song',
-    'windy_guzheng.mp3': 'Wind Through Bamboo',
-    'default_guzheng.mp3': 'Spring River Flower Moon Night'
+    'sunny_guzheng.mp3': "Kikujiro (菊次郎的夏天)",
+    'cloudy_guzheng.mp3': "Fisherman's Song at Dusk (渔舟唱晚)",
+    'rainy_guzheng.mp3': "Rain on the Mountain (半山听雨)",
+    'snowy_guzheng.mp3': "Jingle Bells (铃儿叮当)",
+    'windy_guzheng.mp3': "Fighting the Typhoon (战台风)"
   }
   currentTrackName.value = trackNames[newTrack] || 'Traditional Guzheng Music'
   
-  // Reload and play the new audio
+  // Load the new audio but don't auto-play
   if (audio.value) {
-    const wasPlaying = isPlaying.value
-    audio.value.load() // Load new source
-    
-    if (wasPlaying) {
-      // If music was playing, continue playing the new track
-      setTimeout(() => {
-        if (audio.value) {
-          audio.value.play().catch(error => {
-            console.log('Audio play failed:', error)
-          })
-        }
-      }, 100)
-    }
+    audio.value.load()
+    console.log('Audio ready:', newTrack)
   }
 }
 
@@ -428,6 +459,23 @@ const onVideoPause = () => {
   }
 }
 
+const onVideoLoaded = () => {
+  // Once video is loaded, remove the poster to show video content
+  if (video.value) {
+    if (video.value.hasAttribute('poster')) {
+      // Force video to show first frame immediately
+      video.value.currentTime = 0.1
+      // Trigger fade-in transition
+      showVideoContent.value = true
+      // Remove poster after fade-in completes
+      setTimeout(() => {
+        video.value.removeAttribute('poster')
+        console.log('Poster removed, showing video content')
+      }, 300) // Wait for fade-in to complete
+    }
+  }
+}
+
 // Handle city selection with video playback
 const selectCityWithVideo = (cityName) => {
   selectedCity.value = cityName
@@ -435,14 +483,25 @@ const selectCityWithVideo = (cityName) => {
   
   if (weatherData && weatherData.weather) {
     const condition = weatherData.weather.condition
-    // Play both weather video and audio
-    playWeatherVideo(cityName, condition)
-    playWeatherAudio(condition)
+    // Setup both weather video and audio
+    setupWeatherVideo(cityName, condition)
+    setupWeatherAudio(condition)
   } else {
     // Fallback to clear weather if no data available
-    playWeatherVideo(cityName, 'clear')
-    playWeatherAudio('clear')
+    setupWeatherVideo(cityName, 'clear')
+    setupWeatherAudio('clear')
   }
+  
+  // Auto-play both video and audio after a short delay to ensure media is loaded
+  setTimeout(() => {
+    if (video.value && audio.value) {
+      video.value.play().catch(e => console.log('Video autoplay failed:', e))
+      audio.value.play().catch(e => console.log('Audio autoplay failed:', e))
+      isVideoPlaying.value = true
+      isPlaying.value = true
+      showControls() // Show controls briefly when auto-playing
+    }
+  }, 200)
 }
 </script>
 
@@ -486,14 +545,18 @@ const selectCityWithVideo = (cityName) => {
         <video 
           v-show="showVideo"
           ref="video"
-          class="absolute inset-0 w-full h-full object-cover"
+          :class="[
+            'absolute inset-0 w-full h-full object-cover video-no-poster transition-opacity duration-500 ease-in-out',
+            showVideoContent ? 'opacity-100' : 'opacity-0'
+          ]"
           muted
           loop
           preload="metadata"
           poster="/guzheng_girl.png"
           @ended="onVideoEnded"
           @play="onVideoPlay"
-          @pause="onVideoPause">
+          @pause="onVideoPause"
+          @loadeddata="onVideoLoaded">
           <source :src="currentVideo ? `/${currentVideo}` : ''" type="video/mp4">
           Your browser does not support the video element.
         </video>
@@ -656,7 +719,7 @@ const selectCityWithVideo = (cityName) => {
           >
             <img src="../src/assets/wheel.jpg" alt="Tianjin" class="w-13 h-12 object-contain mx-auto mb-3" />
             <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Tianjin</h4>
-            <p class="font-nimbus text-base text-gray-600">Hebei</p>
+            <p class="font-nimbus text-base text-gray-600">Tianjin</p>
           </button>
         </div>
       </section>
@@ -766,7 +829,7 @@ const selectCityWithVideo = (cityName) => {
     <!-- Music Player -->
     <div class="bg-white/95 shadow-2xl border-t border-gray-200 px-8 py-6 backdrop-blur-sm">
       <!-- Hidden audio element -->
-      <audio ref="audio" preload="auto" autoplay loop>
+      <audio ref="audio" preload="auto" loop>
         <source :src="`media/${currentTrack}`" type="audio/mpeg">
         Your browser does not support the audio element.
       </audio>
@@ -817,5 +880,13 @@ const selectCityWithVideo = (cityName) => {
 </template>
 
 <style scoped>
-/* Additional custom styles if needed */
+/* Force video to show content instead of poster when loaded */
+.video-no-poster:not([poster]) {
+  background: transparent;
+}
+
+/* Additional styles to ensure video content is visible */
+video {
+  object-fit: cover;
+}
 </style>
