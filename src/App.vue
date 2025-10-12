@@ -975,20 +975,6 @@ const selectCityWithVideo = (cityName) => {
       </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white/90 border-t border-gray-200 px-28 py-8">
-      <div class="text-center">
-        <div class="flex items-center justify-center mb-4">
-          <span class="text-xl mr-2">🎵</span>
-          <span class="font-nimbus text-lg font-medium text-gray-700">{{ t.tagline }}</span>
-          <span class="text-xl ml-2">❤️</span>
-        </div>
-        <p class="font-nimbus text-base text-gray-500">
-          {{ t.footerText }}
-        </p>
-      </div>
-    </footer>
-
     <!-- Music Player -->
     <div class="bg-white/95 shadow-2xl border-t border-gray-200 px-8 py-6 backdrop-blur-sm">
       <!-- Hidden audio element -->
@@ -1039,6 +1025,20 @@ const selectCityWithVideo = (cityName) => {
         </div>
       </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-white/90 border-t border-gray-200 px-28 py-8">
+      <div class="text-center">
+        <div class="flex items-center justify-center mb-4">
+          <span class="text-xl mr-2">🎵</span>
+          <span class="font-nimbus text-lg font-medium text-gray-700">{{ t.tagline }}</span>
+          <span class="text-xl ml-2">❤️</span>
+        </div>
+        <p class="font-nimbus text-base text-gray-500">
+          {{ t.footerText }}
+        </p>
+      </div>
+    </footer>
   </div>
 </template>
 
