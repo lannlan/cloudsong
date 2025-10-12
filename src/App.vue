@@ -2,6 +2,140 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { convertWeatherData } from './weatherDataConverter.js'
 
+// Language state (default: English)
+const currentLanguage = ref('en')
+
+// Translation objects
+const translations = {
+  en: {
+    appTitle: 'Cloud Song',
+    tagline: 'Where music bridges, love reaches',
+    madeFor: 'Made for grandparents',
+    withLove: 'With Love ❤️',
+    selectCity: 'Select a City',
+    weather: 'Weather',
+    feelsLike: 'Feels Like',
+    humidity: 'Humidity',
+    windSpeed: 'Wind Speed',
+    forecast: '5-Day Forecast',
+    lastUpdated: 'Data Last Updated',
+    dataSource: 'Weather data from OpenWeatherMap API',
+    footerText: 'Cloud Song © 2025 · Made with love for grandparents',
+    musicCategory: 'Traditional Guzheng Music',
+    justNow: 'Just now',
+    minutesAgo: 'minutes ago',
+    hourAgo: '1 hour ago',
+    hoursAgo: 'hours ago',
+    today: 'Today',
+    loading: 'Loading...',
+    location: 'Location',
+    // Cities
+    sanFrancisco: 'San Francisco',
+    boston: 'Boston',
+    chicago: 'Chicago',
+    beijing: 'Beijing',
+    tianjin: 'Tianjin',
+    // States/Regions
+    california: 'California',
+    massachusetts: 'Massachusetts',
+    illinois: 'Illinois',
+    // Weather conditions
+    clear: 'Clear',
+    clouds: 'Cloudy',
+    rain: 'Rainy',
+    snow: 'Snowy',
+    wind: 'Windy'
+  },
+  zh: {
+    appTitle: '云歌',
+    tagline: '音乐为桥，情达千里',
+    madeFor: '献给我们的爷爷奶奶',
+    withLove: '满怀爱意 ❤️',
+    selectCity: '选择城市',
+    weather: '天气',
+    feelsLike: '体感温度',
+    humidity: '湿度',
+    windSpeed: '风速',
+    forecast: '未来5天预报',
+    lastUpdated: '数据更新时间',
+    dataSource: '天气数据来自OpenWeatherMap API',
+    footerText: '云歌 © 2025 · 用爱为爷爷奶奶制作',
+    musicCategory: '传统古筝音乐',
+    justNow: '刚刚',
+    minutesAgo: '分钟前',
+    hourAgo: '1小时前',
+    hoursAgo: '小时前',
+    today: '今天',
+    loading: '加载中...',
+    location: '位置',
+    // Cities
+    sanFrancisco: '旧金山',
+    boston: '波士顿',
+    chicago: '芝加哥',
+    beijing: '北京',
+    tianjin: '天津',
+    // States/Regions
+    california: '加利福尼亚',
+    massachusetts: '马萨诸塞',
+    illinois: '伊利诺伊',
+    // Weather conditions
+    clear: '晴朗',
+    clouds: '多云',
+    rain: '下雨',
+    snow: '下雪',
+    wind: '大风'
+  }
+}
+
+// Computed property for current translations
+const t = computed(() => translations[currentLanguage.value])
+
+// Unit conversion functions
+const celsiusToFahrenheit = (celsius) => {
+  return Math.round(celsius * 9/5 + 32)
+}
+
+const msToMph = (ms) => {
+  return Math.round(ms * 2.237)
+}
+
+const convertTemperature = (tempString) => {
+  if (!tempString) return tempString
+  // Extract number from string like "15°C"
+  const match = tempString.match(/-?\d+/)
+  if (!match) return tempString
+  const celsius = parseInt(match[0])
+  if (currentLanguage.value === 'en') {
+    return `${celsiusToFahrenheit(celsius)}°F`
+  }
+  return tempString
+}
+
+const convertWindSpeed = (speedString) => {
+  if (!speedString) return speedString
+  // Extract number from string like "5.2 m/s"
+  const match = speedString.match(/[\d.]+/)
+  if (!match) return speedString
+  const ms = parseFloat(match[0])
+  if (currentLanguage.value === 'en') {
+    return `${msToMph(ms)} mph`
+  }
+  return speedString
+}
+
+const convertTemperatureRange = (rangeString) => {
+  if (!rangeString) return rangeString
+  // Extract numbers from string like "H: 18°C L: 12°C"
+  const matches = rangeString.match(/-?\d+/g)
+  if (!matches || matches.length < 2) return rangeString
+  const high = parseInt(matches[0])
+  const low = parseInt(matches[1])
+  if (currentLanguage.value === 'en') {
+    return `H: ${celsiusToFahrenheit(high)}°F L: ${celsiusToFahrenheit(low)}°F`
+  }
+  return rangeString
+}
+
 // Selected city state
 const selectedCity = ref('San Francisco')
 const cityWeatherDataSet = reactive(new Map());
@@ -77,25 +211,26 @@ const curCityWeatherData = computed(() => cityWeatherDataSet.get(selectedCity.va
 
 // Format last updated time
 const formattedLastUpdated = computed(() => {
-  if (!lastUpdated.value) return 'Never'
+  if (!lastUpdated.value) return currentLanguage.value === 'en' ? 'Never' : '从未'
   
   // Use now.value to make this computed property reactive to time changes
   const currentMoment = now.value
   const diff = currentMoment - lastUpdated.value
   const minutes = Math.floor(diff / 60000)
   
-  if (minutes < 5) return 'Just now'
+  if (minutes < 5) return t.value.justNow
   
   // Round to nearest 5 minutes for display
   const roundedMinutes = Math.floor(minutes / 5) * 5
-  if (roundedMinutes < 60) return `${roundedMinutes} minutes ago`
+  if (roundedMinutes < 60) return `${roundedMinutes} ${t.value.minutesAgo}`
   
   const hours = Math.floor(minutes / 60)
-  if (hours === 1) return '1 hour ago'
-  if (hours < 24) return `${hours} hours ago`
+  if (hours === 1) return t.value.hourAgo
+  if (hours < 24) return `${hours} ${t.value.hoursAgo}`
   
   // For older updates, show full date and time
-  return lastUpdated.value.toLocaleString('en-US', {
+  const locale = currentLanguage.value === 'en' ? 'en-US' : 'zh-CN'
+  return lastUpdated.value.toLocaleString(locale, {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -509,21 +644,49 @@ const selectCityWithVideo = (cityName) => {
   <div class="flex flex-col min-h-screen bg-white">
     <!-- Header -->
     <header class="bg-white/90 shadow-sm border-b border-gray-200 px-3 sm:px-28 py-6 relative z-10">
+      <!-- Language Toggle Switch - Top Right Corner -->
+      <div class="absolute top-4 right-4 sm:right-28 z-20">
+        <div class="flex items-center gap-2 bg-gray-100 rounded-full p-1 border-2 border-gray-200">
+          <button
+            @click="currentLanguage = 'en'"
+            :class="[
+              'px-4 py-1.5 rounded-full font-nimbus text-sm font-medium transition-all duration-200',
+              currentLanguage === 'en'
+                ? 'bg-pink-500 text-white shadow-md'
+                : 'bg-transparent text-gray-600 hover:text-gray-800'
+            ]"
+          >
+            English
+          </button>
+          <button
+            @click="currentLanguage = 'zh'"
+            :class="[
+              'px-4 py-1.5 rounded-full font-nimbus text-sm font-medium transition-all duration-200',
+              currentLanguage === 'zh'
+                ? 'bg-pink-500 text-white shadow-md'
+                : 'bg-transparent text-gray-600 hover:text-gray-800'
+            ]"
+          >
+            中文
+          </button>
+        </div>
+      </div>
+      
       <div class="flex items-center justify-between gap-4 sm:gap-25 flex-wrap">
         <div class="flex items-center min-w-60">
           <img src="../src/assets/cloud_song_logo.png" alt="Cloud Song logo"
             class="w-15 h-15 rounded-full object-cover" />
 
           <div class="ml-3 max-w-96">
-            <h1 class="font-limelight text-3xl text-gray-800 leading-tight">Cloud Song</h1>
-            <p class="font-inter text-base text-gray-600">Where music bridges, love reaches</p>
+            <h1 class="font-limelight text-3xl text-gray-800 leading-tight">{{ t.appTitle }}</h1>
+            <p class="font-inter text-base text-gray-600">{{ t.tagline }}</p>
           </div>
 
         </div>
 
         <div class="text-right flex flex-col items-end">
-          <p class="font-nimbus text-base text-gray-800 font-medium">Made for grandparents</p>
-          <p class="text-pink-500 text-sm font-inter font-medium">With Love ❤️</p>
+          <p class="font-nimbus text-base text-gray-800 font-medium">{{ t.madeFor }}</p>
+          <p class="text-pink-500 text-sm font-inter font-medium">{{ t.withLove }}</p>
         </div>
       </div>
     </header>
@@ -614,7 +777,7 @@ const selectCityWithVideo = (cityName) => {
       <!-- City Selection -->
       <section class="mb-8">
         <h3 class="font-nimbus text-3xl font-bold text-gray-800 text-center mb-6">
-          Select a City
+          {{ t.selectCity }}
         </h3>
 
 
@@ -630,8 +793,8 @@ const selectCityWithVideo = (cityName) => {
             ]"
           >
             <div class="text-4xl mb-3">🌉</div>
-            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">San Francisco</h4>
-            <p class="font-nimbus text-base text-gray-600">California</p>
+            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ t.sanFrancisco }}</h4>
+            <p class="font-nimbus text-base text-gray-600">{{ t.california }}</p>
           </button>
 
           <!-- Boston -->
@@ -645,8 +808,8 @@ const selectCityWithVideo = (cityName) => {
             ]"
           >
             <img src="../src/assets/boston.png" alt="Boston" class="w-13 h-12 object-contain mx-auto mb-3" />
-            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Boston</h4>
-            <p class="font-nimbus text-base text-gray-600">Massachusetts</p>
+            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ t.boston }}</h4>
+            <p class="font-nimbus text-base text-gray-600">{{ t.massachusetts }}</p>
           </button>
 
           <!-- Seattle -->
@@ -675,8 +838,8 @@ const selectCityWithVideo = (cityName) => {
             ]"
           >
             <img src="../src/assets/city.png" alt="Chicago" class="w-13 h-12 object-contain mx-auto mb-3" />
-            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Chicago</h4>
-            <p class="font-nimbus text-base text-gray-600">Illinois</p>
+            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ t.chicago }}</h4>
+            <p class="font-nimbus text-base text-gray-600">{{ t.illinois }}</p>
           </button>
 
           <!-- New York -->
@@ -704,8 +867,8 @@ const selectCityWithVideo = (cityName) => {
             ]"
           >
             <img src="../src/assets/forbidden-city.png" alt="Beijing" class="w-13 h-12 object-contain mx-auto mb-3" />
-            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Beijing</h4>
-            <p class="font-nimbus text-base text-gray-600">Beijing</p>
+            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ t.beijing }}</h4>
+            <p class="font-nimbus text-base text-gray-600">{{ t.beijing }}</p>
           </button>
 
           <button
@@ -718,8 +881,8 @@ const selectCityWithVideo = (cityName) => {
             ]"
           >
             <img src="../src/assets/wheel.jpg" alt="Tianjin" class="w-13 h-12 object-contain mx-auto mb-3" />
-            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">Tianjin</h4>
-            <p class="font-nimbus text-base text-gray-600">Tianjin</p>
+            <h4 class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ t.tianjin }}</h4>
+            <p class="font-nimbus text-base text-gray-600">{{ t.tianjin }}</p>
           </button>
         </div>
       </section>
@@ -727,8 +890,8 @@ const selectCityWithVideo = (cityName) => {
       <!-- Weather Display -->
       <section class="bg-white rounded-3xl border-4 border-l-4 border-gray-200 p-11">
         <div class="text-center mb-8">
-          <h3 class="font-nimbus text-4xl font-bold text-gray-800 mb-2">{{ curCityWeatherData?.name || selectedCity }} Weather</h3>
-          <p class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.location || 'Location' }}</p>
+          <h3 class="font-nimbus text-4xl font-bold text-gray-800 mb-2">{{ curCityWeatherData?.name || selectedCity }} {{ t.weather }}</h3>
+          <p class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.location || t.location }}</p>
         </div>
 
         <!-- Current Weather -->
@@ -737,7 +900,7 @@ const selectCityWithVideo = (cityName) => {
             <!-- Main Weather Info -->
             <div class="text-center">
               <div class="text-9xl mb-4">{{ curCityWeatherData?.forecast?.[0]?.icon || '☀️' }}</div>
-              <div class="font-nimbus text-6xl font-bold text-gray-800 mb-4">{{ curCityWeatherData?.weather?.temperature }}</div>
+              <div class="font-nimbus text-6xl font-bold text-gray-800 mb-4">{{ convertTemperature(curCityWeatherData?.weather?.temperature) }}</div>
               <div class="font-nimbus text-3xl font-medium text-gray-700 mb-4">{{ curCityWeatherData?.weather?.condition }}</div>
               <div class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.weather?.description }}</div>
             </div>
@@ -747,15 +910,15 @@ const selectCityWithVideo = (cityName) => {
               <div class="bg-white/80 rounded-3xl border border-gray-200 p-6 flex items-center justify-between">
                 <div class="flex items-center">
                   <span class="text-2xl mr-3">🌡️</span>
-                  <span class="font-nimbus text-lg font-medium text-gray-700">Feels Like</span>
+                  <span class="font-nimbus text-lg font-medium text-gray-700">{{ t.feelsLike }}</span>
                 </div>
-                <span class="font-nimbus text-xl font-bold text-gray-800">{{ curCityWeatherData?.weather?.feelsLike }}</span>
+                <span class="font-nimbus text-xl font-bold text-gray-800">{{ convertTemperature(curCityWeatherData?.weather?.feelsLike) }}</span>
               </div>
 
               <div class="bg-white/80 rounded-3xl border border-gray-200 p-6 flex items-center justify-between">
                 <div class="flex items-center">
                   <span class="text-2xl mr-5">💧</span>
-                  <span class="font-nimbus text-lg font-medium text-gray-700">Humidity</span>
+                  <span class="font-nimbus text-lg font-medium text-gray-700">{{ t.humidity }}</span>
                 </div>
                 <span class="font-nimbus text-xl font-bold text-gray-800">{{ curCityWeatherData?.weather?.humidity }}</span>
               </div>
@@ -763,9 +926,9 @@ const selectCityWithVideo = (cityName) => {
               <div class="bg-white/80 rounded-3xl border border-gray-200 p-6 flex items-center justify-between">
                 <div class="flex items-center">
                   <span class="text-2xl mr-3">💨</span>
-                  <span class="font-nimbus text-lg font-medium text-gray-700">Wind Speed</span>
+                  <span class="font-nimbus text-lg font-medium text-gray-700">{{ t.windSpeed }}</span>
                 </div>
-                <span class="font-nimbus text-xl font-bold text-gray-800">{{ curCityWeatherData?.weather?.windSpeed }}</span>
+                <span class="font-nimbus text-xl font-bold text-gray-800">{{ convertWindSpeed(curCityWeatherData?.weather?.windSpeed) }}</span>
               </div>
             </div>
           </div>
@@ -774,7 +937,7 @@ const selectCityWithVideo = (cityName) => {
         <!-- 5-Day Forecast -->
         <div class="mb-8">
           <h4 class="font-nimbus text-3xl font-bold text-gray-800 text-center mb-6">
-            5-Day Forecast
+            {{ t.forecast }}
           </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div 
@@ -785,19 +948,19 @@ const selectCityWithVideo = (cityName) => {
               <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">{{ forecast.day }}</h5>
               <p class="font-nimbus text-sm text-gray-600 mb-2">{{ forecast.date }}</p>
               <div class="text-4xl mb-2">{{ forecast.icon }}</div>
-              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ forecast.temperature }}</div>
+              <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ convertTemperature(forecast.temperature) }}</div>
               <div class="font-nimbus text-sm text-gray-600 mb-1">{{ forecast.condition }}</div>
-              <div class="font-nimbus text-xs text-gray-500">{{ forecast.range }}</div>
+              <div class="font-nimbus text-xs text-gray-500">{{ convertTemperatureRange(forecast.range) }}</div>
             </div>
             
             <!-- Fallback static forecast cards if no data -->
             <template v-if="!curCityWeatherData?.forecast || curCityWeatherData.forecast.length === 0">
               <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center">
-                <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">Today</h5>
-                <p class="font-nimbus text-sm text-gray-600 mb-2">Loading...</p>
+                <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">{{ t.today }}</h5>
+                <p class="font-nimbus text-sm text-gray-600 mb-2">{{ t.loading }}</p>
                 <div class="text-4xl mb-2">☀️</div>
                 <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">--°F</div>
-                <div class="font-nimbus text-sm text-gray-600 mb-1">Loading</div>
+                <div class="font-nimbus text-sm text-gray-600 mb-1">{{ t.loading }}</div>
                 <div class="font-nimbus text-xs text-gray-500">H: --° L: --°</div>
               </div>
             </template>
@@ -806,8 +969,8 @@ const selectCityWithVideo = (cityName) => {
 
         <!-- Last Updated -->
         <div class="text-center text-gray-500">
-          <p class="font-nimbus text-base mb-1">Data Last Updated: {{ formattedLastUpdated }}</p>
-          <p class="font-nimbus text-sm text-gray-400">Weather data from OpenWeatherMap API</p>
+          <p class="font-nimbus text-base mb-1">{{ t.lastUpdated }}: {{ formattedLastUpdated }}</p>
+          <p class="font-nimbus text-sm text-gray-400">{{ t.dataSource }}</p>
         </div>
       </section>
     </main>
@@ -817,11 +980,11 @@ const selectCityWithVideo = (cityName) => {
       <div class="text-center">
         <div class="flex items-center justify-center mb-4">
           <span class="text-xl mr-2">🎵</span>
-          <span class="font-nimbus text-lg font-medium text-gray-700">Where music bridges, love reaches</span>
+          <span class="font-nimbus text-lg font-medium text-gray-700">{{ t.tagline }}</span>
           <span class="text-xl ml-2">❤️</span>
         </div>
         <p class="font-nimbus text-base text-gray-500">
-          Cloud Song © 2025 · Made with love for grandparents
+          {{ t.footerText }}
         </p>
       </div>
     </footer>
@@ -844,7 +1007,7 @@ const selectCityWithVideo = (cityName) => {
             <h4 class="font-nimbus text-lg font-bold text-gray-800 truncate">
               {{ currentTrackName }}
             </h4>
-            <p class="font-nimbus text-base text-gray-600 truncate">Traditional Guzheng Music</p>
+            <p class="font-nimbus text-base text-gray-600 truncate">{{ t.musicCategory }}</p>
           </div>
         </div>
 
