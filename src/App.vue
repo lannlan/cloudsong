@@ -1125,7 +1125,7 @@ const selectCityWithVideo = (cityName) => {
     </main>
 
     <!-- Music Player -->
-    <div class="bg-white/95 shadow-2xl border-t border-gray-200 px-8 py-6 backdrop-blur-sm">
+    <div class="bg-white/95 px-8 py-6 backdrop-blur-sm">
       <!-- Hidden audio element -->
       <audio ref="audio" preload="auto" loop>
         <source :src="`media/${currentTrack}`" type="audio/mpeg">
@@ -1176,7 +1176,7 @@ const selectCityWithVideo = (cityName) => {
     </div>
 
     <!-- Footer -->
-    <footer class="bg-white/90 border-t border-gray-200 px-28 py-8">
+    <footer class="bg-white/95 border-t border-gray-200 px-8 py-6 backdrop-blur-sm" style="box-shadow: 0 25px 50px 5px rgba(0, 0, 0, 0.25), 0 35px 70px 15px rgba(0, 0, 0, 0.35);">
       <div class="text-center">
         <div class="flex items-center justify-center mb-4">
           <span class="text-xl mr-2">🎵</span>
