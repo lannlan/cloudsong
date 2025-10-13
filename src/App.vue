@@ -49,7 +49,7 @@ const translations = {
   zh: {
     appTitle: '云歌',
     tagline: '音乐为桥，情达千里',
-    madeFor: '献给我们的爷爷奶奶',
+    madeFor: '献给我的祖父母',
     withLove: '满怀爱意 ❤️',
     selectCity: '选择城市',
     weather: '天气',
@@ -59,7 +59,7 @@ const translations = {
     forecast: '未来5天预报',
     lastUpdated: '数据更新时间',
     dataSource: '天气数据来自OpenWeatherMap API',
-    footerText: '云歌 © 2025 · 用爱为爷爷奶奶制作',
+    footerText: '云歌 © 2025 · 用爱为祖父母制作',
     musicCategory: '传统古筝音乐',
     justNow: '刚刚',
     minutesAgo: '分钟前',
@@ -132,8 +132,157 @@ const convertTemperatureRange = (rangeString) => {
   const low = parseInt(matches[1])
   if (currentLanguage.value === 'en') {
     return `H: ${celsiusToFahrenheit(high)}°F L: ${celsiusToFahrenheit(low)}°F`
+  } else {
+    // Chinese mode: translate H/L labels
+    return `最高: ${high}°C 最低: ${low}°C`
   }
-  return rangeString
+}
+
+// Translation functions for API data
+const translateCityName = (cityName) => {
+  if (!cityName || currentLanguage.value === 'en') return cityName
+  
+  const cityMap = {
+    'San Francisco': '旧金山',
+    'Boston': '波士顿',
+    'Chicago': '芝加哥',
+    'Beijing': '北京',
+    'Tianjin': '天津'
+  }
+  return cityMap[cityName] || cityName
+}
+
+const translateWeatherCondition = (condition) => {
+  if (!condition || currentLanguage.value === 'en') return condition
+  
+  const conditionMap = {
+    'Clear': '晴朗',
+    'Sunny': '晴朗',
+    'Clouds': '多云',
+    'Cloudy': '多云',
+    'Partly Cloudy': '局部多云',
+    'Overcast': '阴天',
+    'Rain': '下雨',
+    'Rainy': '下雨',
+    'Drizzle': '小雨',
+    'Light rain': '小雨',
+    'Moderate rain': '中雨',
+    'Heavy rain': '大雨',
+    'Snow': '下雪',
+    'Snowy': '下雪',
+    'Light snow': '小雪',
+    'Heavy snow': '大雪',
+    'Thunderstorm': '雷暴',
+    'Mist': '薄雾',
+    'Fog': '雾',
+    'Haze': '霾',
+    'Wind': '大风',
+    'Windy': '大风'
+  }
+  return conditionMap[condition] || condition
+}
+
+const translateDayName = (dayName) => {
+  if (!dayName || currentLanguage.value === 'en') return dayName
+  
+  const dayMap = {
+    'Today': '今天',
+    'Tomorrow': '明天',
+    'Monday': '星期一',
+    'Tuesday': '星期二',
+    'Wednesday': '星期三',
+    'Thursday': '星期四',
+    'Friday': '星期五',
+    'Saturday': '星期六',
+    'Sunday': '星期日'
+  }
+  return dayMap[dayName] || dayName
+}
+
+const translateDescription = (description) => {
+  if (!description || currentLanguage.value === 'en') return description
+  
+  const descriptionMap = {
+    'clear sky': '晴空',
+    'few clouds': '少云',
+    'scattered clouds': '疏云',
+    'broken clouds': '碎云',
+    'overcast clouds': '阴云密布',
+    'shower rain': '阵雨',
+    'rain': '雨',
+    'light rain': '小雨',
+    'moderate rain': '中雨',
+    'heavy intensity rain': '大雨',
+    'thunderstorm': '雷暴',
+    'snow': '雪',
+    'light snow': '小雪',
+    'heavy snow': '大雪',
+    'mist': '薄雾',
+    'fog': '雾',
+    'haze': '霾'
+  }
+  
+  // Try exact match first
+  const lowerDesc = description.toLowerCase()
+  if (descriptionMap[lowerDesc]) {
+    return descriptionMap[lowerDesc]
+  }
+  
+  // Try partial matches
+  for (const [key, value] of Object.entries(descriptionMap)) {
+    if (lowerDesc.includes(key)) {
+      return value
+    }
+  }
+  
+  return description
+}
+
+const translateDate = (dateString) => {
+  if (!dateString || currentLanguage.value === 'en') return dateString
+  
+  const monthMap = {
+    'Jan': '1月',
+    'Feb': '2月',
+    'Mar': '3月',
+    'Apr': '4月',
+    'May': '5月',
+    'Jun': '6月',
+    'Jul': '7月',
+    'Aug': '8月',
+    'Sep': '9月',
+    'Oct': '10月',
+    'Nov': '11月',
+    'Dec': '12月'
+  }
+  
+  // Match pattern like "Oct 12" or "Jan 5"
+  const match = dateString.match(/([A-Za-z]+)\s+(\d+)/)
+  if (match) {
+    const [, month, day] = match
+    const chineseMonth = monthMap[month] || month
+    return `${chineseMonth}${day}日`
+  }
+  
+  return dateString
+}
+
+const translateLocation = (location) => {
+  if (!location || currentLanguage.value === 'en') return location
+  
+  const locationMap = {
+    'California, United States': '加利福尼亚州，美国',
+    'Massachusetts, United States': '马萨诸塞州，美国',
+    'Illinois, United States': '伊利诺伊州，美国',
+    'Washington, United States': '华盛顿州，美国',
+    'New York, United States': '纽约州，美国',
+    'Beijing, China': '北京，中国',
+    'Tianjin, China': '天津，中国',
+    'United States': '美国',
+    'China': '中国'
+  }
+  
+  return locationMap[location] || location
 }
 
 // Selected city state
@@ -890,8 +1039,8 @@ const selectCityWithVideo = (cityName) => {
       <!-- Weather Display -->
       <section class="bg-white rounded-3xl border-4 border-l-4 border-gray-200 p-11">
         <div class="text-center mb-8">
-          <h3 class="font-nimbus text-4xl font-bold text-gray-800 mb-2">{{ curCityWeatherData?.name || selectedCity }} {{ t.weather }}</h3>
-          <p class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.location || t.location }}</p>
+          <h3 class="font-nimbus text-4xl font-bold text-gray-800 mb-2">{{ translateCityName(curCityWeatherData?.name || selectedCity) }} {{ t.weather }}</h3>
+          <p class="font-nimbus text-lg text-gray-600">{{ translateLocation(curCityWeatherData?.location) || t.location }}</p>
         </div>
 
         <!-- Current Weather -->
@@ -901,8 +1050,8 @@ const selectCityWithVideo = (cityName) => {
             <div class="text-center">
               <div class="text-9xl mb-4">{{ curCityWeatherData?.forecast?.[0]?.icon || '☀️' }}</div>
               <div class="font-nimbus text-6xl font-bold text-gray-800 mb-4">{{ convertTemperature(curCityWeatherData?.weather?.temperature) }}</div>
-              <div class="font-nimbus text-3xl font-medium text-gray-700 mb-4">{{ curCityWeatherData?.weather?.condition }}</div>
-              <div class="font-nimbus text-lg text-gray-600">{{ curCityWeatherData?.weather?.description }}</div>
+              <div class="font-nimbus text-3xl font-medium text-gray-700 mb-4">{{ translateWeatherCondition(curCityWeatherData?.weather?.condition) }}</div>
+              <div class="font-nimbus text-lg text-gray-600">{{ translateDescription(curCityWeatherData?.weather?.description) }}</div>
             </div>
 
             <!-- Weather Details -->
@@ -945,11 +1094,11 @@ const selectCityWithVideo = (cityName) => {
               :key="index"
               class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 text-center"
             >
-              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">{{ forecast.day }}</h5>
-              <p class="font-nimbus text-sm text-gray-600 mb-2">{{ forecast.date }}</p>
+              <h5 class="font-nimbus text-lg font-bold text-gray-800 mb-2">{{ translateDayName(forecast.day) }}</h5>
+              <p class="font-nimbus text-sm text-gray-600 mb-2">{{ translateDate(forecast.date) }}</p>
               <div class="text-4xl mb-2">{{ forecast.icon }}</div>
               <div class="font-nimbus text-xl font-bold text-gray-800 mb-1">{{ convertTemperature(forecast.temperature) }}</div>
-              <div class="font-nimbus text-sm text-gray-600 mb-1">{{ forecast.condition }}</div>
+              <div class="font-nimbus text-sm text-gray-600 mb-1">{{ translateWeatherCondition(forecast.condition) }}</div>
               <div class="font-nimbus text-xs text-gray-500">{{ convertTemperatureRange(forecast.range) }}</div>
             </div>
             
