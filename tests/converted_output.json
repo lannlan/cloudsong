@@ -1,0 +1,56 @@
+{
+  "boston": {
+    "name": "Boston",
+    "location": "Massachusetts, United States",
+    "weather": {
+      "temperature": "-410°F",
+      "condition": "Partly Cloudy",
+      "description": "Scattered clouds",
+      "feelsLike": "-409°F",
+      "humidity": "55%",
+      "windSpeed": "7 mph"
+    },
+    "forecast": [
+      {
+        "day": "Today",
+        "date": "Sep 28",
+        "icon": "⛅",
+        "temperature": "-410°F",
+        "condition": "Partly Cloudy",
+        "range": "H: -410° L: -434°"
+      },
+      {
+        "day": "Tomorrow",
+        "date": "Sep 29",
+        "icon": "☁️",
+        "temperature": "-416°F",
+        "condition": "Overcast",
+        "range": "H: -416° L: -428°"
+      },
+      {
+        "day": "Tuesday",
+        "date": "Sep 30",
+        "icon": "☁️",
+        "temperature": "-425°F",
+        "condition": "Overcast",
+        "range": "H: -425° L: -437°"
+      },
+      {
+        "day": "Wednesday",
+        "date": "Oct 1",
+        "icon": "☀️",
+        "temperature": "-432°F",
+        "condition": "Clear",
+        "range": "H: -432° L: -443°"
+      },
+      {
+        "day": "Thursday",
+        "date": "Oct 2",
+        "icon": "☀️",
+        "temperature": "-436°F",
+        "condition": "Clear",
+        "range": "H: -421° L: -446°"
+      }
+    ]
+  }
+}

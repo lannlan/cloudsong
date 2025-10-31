@@ -1,56 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Cloudsong</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Delius+Swash+Caps&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <h1>Cloudsong</h1>
-    <button id="loadWeatherCA">Sunnyvale, CA, USA</button>
-    <button id="loadWeatherBJ">Beijing, China</button>
-    <button id="loadWeatherTJ">Tianjin, China</button>
-    <button id="aboutBtn">About</button>
-
-    <div id="mainView">
-      <div id="forecast"></div>
-      <!-- div id="canvasContainer"></div -->
-      <div id="musicContainer">
-        <div style="display: flex; align-items: stretch; gap: 20px; justify-content: center;">
-          <div id="art_music" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 15px; min-height: 350px;">
-            <img id="art" src="" alt="" style="width: 300px; display: none;">
-            <audio id="music" controls style="display: none;"></audio>
-          </div>
-          <div id="weatherInfo" style="display: none; text-align: left; padding: 15px; min-width: 200px; min-height: 350px; flex-direction: column;">
-            <h3 style="margin-top: 0; color: #2c5aa0;">Weather Details</h3>
-            <div id="weatherDetails" style="flex-grow: 1;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hidden About Screen -->
-    <div id="aboutScreen" style="display: none;">
-      <h2>About Me</h2>
-      <p>
-        Hi! I'm Ranya Zhang, and I'm passionate about the intersection of data science, computer science, digital art, and traditional music.
-        My multimedia work blends ancient sound with modern expression. The guzheng, a Chinese zither with over 2,000 years of history,
-        is at the heart of this project. I combine it with real-time data and visual storytelling to create interactive experiences.This project is a tribute to the guzheng's
-        beauty and versatility, showcasing how traditional music can be reimagined in the digital age.
-        I hope you enjoy exploring this fusion of art and technology!
-      </p>
-
-      <video controls width="320">
-        <source src="media/guzheng_performance.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
-    <script src="script.js"></script>
-  <script src="sketch.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloud Song - Where music bridges, love reaches</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Limelight&family=Inter:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
