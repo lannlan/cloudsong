@@ -12,7 +12,7 @@ CloudSong was originally built for my grandparents after they returned to China.
 
 * AWS EC2 virtual machine for hosting the website.
 * Nginx web server in the VM that serves the application page.
-* OpenWeatherMap API for realtime wather data.
+* OpenWeatherMap API for realtime weather data.
 * Vue.js JavaScript framework.
 * Cloudflare for HTTPS protocol and security
 
